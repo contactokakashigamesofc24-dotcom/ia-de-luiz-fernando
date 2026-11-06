@@ -1,6 +1,7 @@
 package br.com.luiz.navegadorlivre;
 
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -103,6 +104,12 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void signOut() {
             runOnUiThread(() -> clearGoogleCredentialState());
+        }
+        @JavascriptInterface public void openDownloads() {
+            runOnUiThread(() -> {
+                try { startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)); }
+                catch (Exception e) { Toast.makeText(MainActivity.this, "Não consegui abrir os Downloads do Android.", Toast.LENGTH_LONG).show(); }
+            });
         }
     }
 
