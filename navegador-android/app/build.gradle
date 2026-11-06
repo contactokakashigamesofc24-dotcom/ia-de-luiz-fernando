@@ -1,6 +1,14 @@
 plugins { id 'com.android.application' }
 
 android {
+    signingConfigs {
+        stable {
+            storeFile file('navegador-signing.p12')
+            storePassword System.getenv('NAVEGADOR_SIGNING_STOREPASS')
+            keyAlias System.getenv('NAVEGADOR_SIGNING_ALIAS')
+            keyPassword System.getenv('NAVEGADOR_SIGNING_KEYPASS')
+        }
+    }
     namespace 'br.com.luiz.navegadorlivre'
     compileSdk 35
     defaultConfig {
@@ -9,6 +17,11 @@ android {
         targetSdk 35
         versionCode 3
         versionName '1.0.2'
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.stable
+        }
     }
 }
 
