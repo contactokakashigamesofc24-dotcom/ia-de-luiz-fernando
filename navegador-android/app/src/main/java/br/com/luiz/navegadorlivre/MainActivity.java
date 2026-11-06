@@ -6,6 +6,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.RenderProcessGoneDetail;
 import android.content.Intent;
@@ -87,6 +88,7 @@ public class MainActivity extends Activity {
                 }
             });
             web.setWebChromeClient(new WebChromeClient());
+            web.addJavascriptInterface(new NativeBridge(), "NavegadorLivreAndroid");
             setContentView(web);
             web.loadUrl(HOME);
         } catch (Throwable t) {
@@ -95,42 +97,56 @@ public class MainActivity extends Activity {
         }
     }
 
+    private final class NativeBridge {
+        @JavascriptInterface public void startGoogleSignIn() {
+            runOnUiThread(() -> startNativeGoogleSignIn());
+        }
+        @JavascriptInterface public void signOut() {
+            runOnUiThread(() -> clearGoogleCredentialState());
+        }
+    }
+
     private void startNativeGoogleSignIn() {
-        GetGoogleIdOption option = new GetGoogleIdOption.Builder()
-                .setServerClientId(WEB_CLIENT_ID)
-                .setFilterByAuthorizedAccounts(false)
-                .build();
-        GetCredentialRequest request = new GetCredentialRequest.Builder()
-                .addCredentialOption(option)
-                .build();
-        credentialManager.getCredentialAsync(this, request, null, getMainExecutor(),
-                new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
-                    @Override public void onResult(GetCredentialResponse result) {
-                        Credential credential = result.getCredential();
-                        if (credential instanceof CustomCredential &&
-                                GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
+        try {
+            GetGoogleIdOption option = new GetGoogleIdOption.Builder()
+                    .setServerClientId(WEB_CLIENT_ID)
+                    .setFilterByAuthorizedAccounts(false)
+                    .build();
+            GetCredentialRequest request = new GetCredentialRequest.Builder()
+                    .addCredentialOption(option)
+                    .build();
+            credentialManager.getCredentialAsync(this, request, null, getMainExecutor(),
+                    new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+                        @Override public void onResult(GetCredentialResponse result) {
                             try {
-                                GoogleIdTokenCredential google = GoogleIdTokenCredential.createFrom(((CustomCredential) credential).getData());
-                                JSONObject profile = new JSONObject();
-                                profile.put("name", google.getDisplayName() == null ? "" : google.getDisplayName());
-                                profile.put("given_name", google.getGivenName() == null ? "" : google.getGivenName());
-                                profile.put("family_name", google.getFamilyName() == null ? "" : google.getFamilyName());
-                                profile.put("email", google.getId() == null ? "" : google.getId());
-                                profile.put("picture", google.getProfilePictureUri() == null ? "" : google.getProfilePictureUri().toString());
-                                if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('navegador-google-profile',{detail:" + profile.toString() + "}));", null);
-                            } catch (org.json.JSONException e) {
-                                Log.e(TAG, "Could not parse Google credential", e);
-                                Toast.makeText(MainActivity.this, "O Google retornou um perfil que não consegui ler.", Toast.LENGTH_LONG).show();
+                                Credential credential = result.getCredential();
+                                if (credential instanceof CustomCredential &&
+                                        GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
+                                    GoogleIdTokenCredential google = GoogleIdTokenCredential.createFrom(((CustomCredential) credential).getData());
+                                    JSONObject profile = new JSONObject();
+                                    profile.put("name", google.getDisplayName() == null ? "" : google.getDisplayName());
+                                    profile.put("given_name", google.getGivenName() == null ? "" : google.getGivenName());
+                                    profile.put("family_name", google.getFamilyName() == null ? "" : google.getFamilyName());
+                                    profile.put("email", google.getId() == null ? "" : google.getId());
+                                    profile.put("picture", google.getProfilePictureUri() == null ? "" : google.getProfilePictureUri().toString());
+                                    if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('navegador-google-profile',{detail:" + profile.toString() + "}));", null);
+                                } else {
+                                    Toast.makeText(MainActivity.this, "O Google retornou uma credencial não reconhecida.", Toast.LENGTH_LONG).show();
+                                }
+                            } catch (Throwable e) {
+                                Log.e(TAG, "Could not handle Google credential", e);
+                                Toast.makeText(MainActivity.this, "Não consegui ler o perfil Google: " + e.getMessage(), Toast.LENGTH_LONG).show();
                             }
-                        } else {
-                            Toast.makeText(MainActivity.this, "O Google retornou uma credencial não reconhecida.", Toast.LENGTH_LONG).show();
                         }
-                    }
-                    @Override public void onError(GetCredentialException e) {
-                        Log.e(TAG, "Google sign-in failed", e);
-                        Toast.makeText(MainActivity.this, "Não foi possível entrar com Google: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
+                        @Override public void onError(GetCredentialException e) {
+                            Log.e(TAG, "Google sign-in failed", e);
+                            Toast.makeText(MainActivity.this, "Login Google: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+        } catch (Throwable e) {
+            Log.e(TAG, "Could not start native Google sign-in", e);
+            Toast.makeText(this, "Falha ao iniciar o login Google: " + e.getClass().getSimpleName() + " — " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void clearGoogleCredentialState() {
