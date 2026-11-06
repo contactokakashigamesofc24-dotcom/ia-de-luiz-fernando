@@ -26,7 +26,7 @@ import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import org.json.JSONObject;
 
@@ -108,13 +108,11 @@ public class MainActivity extends Activity {
 
     private void startNativeGoogleSignIn() {
         try {
-            GetGoogleIdOption option = new GetGoogleIdOption.Builder()
-                    .setServerClientId(WEB_CLIENT_ID)
-                    .setFilterByAuthorizedAccounts(false)
-                    .build();
+            GetSignInWithGoogleOption option = new GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build();
             GetCredentialRequest request = new GetCredentialRequest.Builder()
                     .addCredentialOption(option)
                     .build();
+            setLoginStatus("Abrindo o seletor seguro de contas do Google…");
             credentialManager.getCredentialAsync(this, request, null, getMainExecutor(),
                     new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
                         @Override public void onResult(GetCredentialResponse result) {
@@ -140,13 +138,23 @@ public class MainActivity extends Activity {
                         }
                         @Override public void onError(GetCredentialException e) {
                             Log.e(TAG, "Google sign-in failed", e);
-                            Toast.makeText(MainActivity.this, "Login Google: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            setLoginStatus("O Google não concluiu o login: " + e.getClass().getSimpleName() + " — " + e.getMessage());
                         }
                     });
         } catch (Throwable e) {
             Log.e(TAG, "Could not start native Google sign-in", e);
-            Toast.makeText(this, "Falha ao iniciar o login Google: " + e.getClass().getSimpleName() + " — " + e.getMessage(), Toast.LENGTH_LONG).show();
+            setLoginStatus("Falha ao iniciar o login: " + e.getClass().getSimpleName() + " — " + e.getMessage());
         }
+    }
+
+    private void setLoginStatus(String text) {
+        runOnUiThread(() -> {
+            new android.app.AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Login Google")
+                    .setMessage(text)
+                    .setPositiveButton("Fechar", (dialog, which) -> {})
+                    .show();
+        });
     }
 
     private void clearGoogleCredentialState() {
