@@ -27,7 +27,6 @@ import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException;
 import org.json.JSONObject;
 
 public class MainActivity extends Activity {
@@ -119,7 +118,7 @@ public class MainActivity extends Activity {
                                 profile.put("email", google.getId() == null ? "" : google.getId());
                                 profile.put("picture", google.getProfilePictureUri() == null ? "" : google.getProfilePictureUri().toString());
                                 if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('navegador-google-profile',{detail:" + profile.toString() + "}));", null);
-                            } catch (GoogleIdTokenParsingException | org.json.JSONException e) {
+                            } catch (org.json.JSONException e) {
                                 Log.e(TAG, "Could not parse Google credential", e);
                                 Toast.makeText(MainActivity.this, "O Google retornou um perfil que não consegui ler.", Toast.LENGTH_LONG).show();
                             }
