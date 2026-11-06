@@ -33,7 +33,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private WebView web;
-    private static final String HOME = "https://contactokakashigamesofc24-dotcom.github.io/ia-de-luiz-fernando/navegador-livre/";
+    private static final String HOME = "https://contactokakashigamesofc24-dotcom.github.io/ia-de-luiz-fernando/navegador-livre/?app=1.0.8";
     private static final String WEB_CLIENT_ID = "876262009316-83gira3u67leg6i63bpe4nmnumuori6s.apps.googleusercontent.com";
     private static final String TAG = "NavegadorLivre";
     private boolean showingFallback = false;
@@ -55,6 +55,8 @@ public class MainActivity extends Activity {
             WebSettings settings = web.getSettings();
             settings.setJavaScriptEnabled(true);
             settings.setDomStorageEnabled(true);
+            settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+            web.clearCache(false);
             settings.setUserAgentString(settings.getUserAgentString() + " NavegadorLivreAndroid");
             settings.setSupportMultipleWindows(false);
             settings.setJavaScriptCanOpenWindowsAutomatically(false);
