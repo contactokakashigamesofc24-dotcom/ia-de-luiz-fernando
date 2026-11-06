@@ -112,7 +112,6 @@ public class MainActivity extends Activity {
             GetCredentialRequest request = new GetCredentialRequest.Builder()
                     .addCredentialOption(option)
                     .build();
-            setLoginStatus("Abrindo o seletor seguro de contas do Google…");
             credentialManager.getCredentialAsync(this, request, null, getMainExecutor(),
                     new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
                         @Override public void onResult(GetCredentialResponse result) {
@@ -128,6 +127,7 @@ public class MainActivity extends Activity {
                                     profile.put("email", google.getId() == null ? "" : google.getId());
                                     profile.put("picture", google.getProfilePictureUri() == null ? "" : google.getProfilePictureUri().toString());
                                     if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('navegador-google-profile',{detail:" + profile.toString() + "}));", null);
+                                    Toast.makeText(MainActivity.this, "Conta Google selecionada.", Toast.LENGTH_SHORT).show();
                                 } else {
                                     Toast.makeText(MainActivity.this, "O Google retornou uma credencial não reconhecida.", Toast.LENGTH_LONG).show();
                                 }
