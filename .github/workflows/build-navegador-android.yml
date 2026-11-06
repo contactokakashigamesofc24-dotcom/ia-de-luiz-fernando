@@ -19,8 +19,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build debug APK
+      - name: Prepare stable signing key
+        env:
+          NAVIGADOR_KEYSTORE_B64: ${{ secrets.NAVEGADOR_SIGNING_KEYSTORE }}
+        run: |
+          echo "$NAVIGADOR_KEYSTORE_B64" | base64 --decode > navegador-android/app/navegador-signing.p12
+      - name: Build APK signed with stable key
+        env:
+          NAVEGADOR_SIGNING_STOREPASS: ${{ secrets.NAVEGADOR_SIGNING_STOREPASS }}
+          NAVEGADOR_SIGNING_KEYPASS: ${{ secrets.NAVEGADOR_SIGNING_KEYPASS }}
+          NAVEGADOR_SIGNING_ALIAS: ${{ secrets.NAVEGADOR_SIGNING_ALIAS }}
         run: gradle --no-daemon -p navegador-android assembleDebug
+      - name: Remove signing key file
+        if: always()
+        run: rm -f navegador-android/app/navegador-signing.p12
       - uses: actions/upload-artifact@v4
         with:
           name: navegador-livre-android-apk
